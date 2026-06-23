@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUVISION — Production Dashboard 2025</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --border: #30363d;
+    --blue: #1e6fd9;
+    --blue-dim: #1a3a6b;
+    --cyan: #39c5cf;
+    --green: #2ea04426;
+    --green-solid: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #58a6ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1e3a5f 50%, #0d1b2a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-box {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, #1e6fd9, #39c5cf);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600; font-size: 13px; color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .header-title { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .header-badge {
+    background: var(--blue-dim); border: 1px solid var(--blue);
+    color: var(--accent); font-size: 11px; padding: 3px 10px;
+    border-radius: 20px; font-weight: 500;
+  }
+  .ai-tag {
+    background: linear-gradient(135deg, #2d1b69, #1a3a6b);
+    border: 1px solid #7c3aed44;
+    color: #a78bfa; font-size: 10px; padding: 3px 10px;
+    border-radius: 20px; font-weight: 600; letter-spacing: 0.5px;
+  }
+
+  /* SLICER BAR */
+  .slicer-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 28px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .slicer-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+  .slicer-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .slicer-btn {
+    padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+  }
+  .slicer-btn:hover { border-color: var(--accent); color: var(--text); }
+  .slicer-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .slicer-divider { width: 1px; height: 24px; background: var(--border); }
+
+  /* MAIN GRID */
+  .main { padding: 18px 28px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; grid-template-rows: auto auto auto; gap: 14px; }
+
+  /* KPI CARDS */
+  .kpi-row { grid-column: 1/-1; display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.blue::before { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+  .kpi-card.green::before { background: linear-gradient(90deg, var(--green-solid), #2ea044); }
+  .kpi-card.yellow::before { background: linear-gradient(90deg, var(--yellow), #e3b341); }
+  .kpi-card.red::before { background: linear-gradient(90deg, var(--red), #ff7b72); }
+  .kpi-card.cyan::before { background: linear-gradient(90deg, var(--cyan), #79c0ff); }
+  .kpi-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+  .kpi-value { font-size: 26px; font-weight: 700; margin: 6px 0 2px; font-family: 'IBM Plex Mono', monospace; }
+  .kpi-card.blue .kpi-value { color: var(--accent); }
+  .kpi-card.green .kpi-value { color: var(--green-solid); }
+  .kpi-card.yellow .kpi-value { color: var(--yellow); }
+  .kpi-card.red .kpi-value { color: var(--red); }
+  .kpi-card.cyan .kpi-value { color: var(--cyan); }
+  .kpi-delta { font-size: 11px; color: var(--muted); }
+  .kpi-icon { position: absolute; right: 14px; top: 14px; font-size: 20px; opacity: 0.25; }
+
+  /* CHART CARDS */
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+    transition: border-color 0.2s;
+  }
+  .chart-card:hover { border-color: #30363d; }
+  .chart-card.span2 { grid-column: span 2; }
+  .chart-card.span1 { grid-column: span 1; }
+  .card-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-sub { font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+  .chart-wrap { position: relative; }
+
+  /* STAGE BARS */
+  .stage-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .stage-row { display: flex; flex-direction: column; gap: 4px; }
+  .stage-header { display: flex; justify-content: space-between; font-size: 11px; }
+  .stage-name { color: var(--text); font-weight: 500; }
+  .stage-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .stage-bar-bg { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .stage-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+  /* OEE GAUGES */
+  .oee-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .oee-item { text-align: center; }
+  .oee-name { font-size: 10px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .oee-circle { position: relative; display: inline-block; }
+  .oee-circle svg { transform: rotate(-90deg); }
+  .oee-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .oee-pct { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: var(--cyan); }
+  .oee-lbl { font-size: 9px; color: var(--muted); }
+
+  /* PRODUCT TABLE */
+  .prod-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+  .prod-table th { color: var(--muted); font-weight: 600; text-align: left; padding: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; border-bottom: 1px solid var(--border); }
+  .prod-table td { padding: 7px 0; border-bottom: 1px solid #21262d; color: var(--text); }
+  .prod-table .mono { font-family: 'IBM Plex Mono', monospace; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .pill.good { background: #1a3a1a; color: var(--green-solid); }
+  .pill.warn { background: #3a2a1a; color: var(--yellow); }
+
+  /* AI INSIGHT BOX */
+  .ai-box {
+    grid-column: 1/-1;
+    background: linear-gradient(135deg, #1a1040 0%, #0d1b2a 100%);
+    border: 1px solid #7c3aed33;
+    border-radius: 10px; padding: 14px 20px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .ai-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .ai-title { font-size: 11px; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .ai-insights { display: flex; gap: 20px; flex-wrap: wrap; }
+  .ai-insight { font-size: 12px; color: #c9b3f5; line-height: 1.5; flex: 1; min-width: 200px; }
+  .ai-insight span { color: #fff; font-weight: 600; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center; padding: 10px; font-size: 10px; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  /* EMPTY STATE for charts with no matching rows (defensive) */
+  .empty-note { font-size: 11px; color: var(--muted); text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-box">MV</div>
+    <div>
+      <div class="header-title">MANUVISION — Production & Quality Analytics</div>
+      <div class="header-sub">Automotive Parts Manufacturing · Full Year 2025</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="ai-tag">✦ AI-Generated Dataset</div>
+    <div class="header-badge">IATF 16949:2015</div>
+  </div>
+</div>
+
+<!-- SLICER BAR -->
+<div class="slicer-bar">
+  <span class="slicer-label">Month</span>
+  <div class="slicer-group" id="month-slicer">
+    <button class="slicer-btn active" onclick="selectMonth('ALL',this)">All</button>
+    <button class="slicer-btn" onclick="selectMonth('Jan',this)">Jan</button>
+    <button class="slicer-btn" onclick="selectMonth('Feb',this)">Feb</button>
+    <button class="slicer-btn" onclick="selectMonth('Mar',this)">Mar</button>
+    <button class="slicer-btn" onclick="selectMonth('Apr',this)">Apr</button>
+    <button class="slicer-btn" onclick="selectMonth('May',this)">May</button>
+    <button class="slicer-btn" onclick="selectMonth('Jun',this)">Jun</button>
+    <button class="slicer-btn" onclick="selectMonth('Jul',this)">Jul</button>
+    <button class="slicer-btn" onclick="selectMonth('Aug',this)">Aug</button>
+    <button class="slicer-btn" onclick="selectMonth('Sep',this)">Sep</button>
+    <button class="slicer-btn" onclick="selectMonth('Oct',this)">Oct</button>
+    <button class="slicer-btn" onclick="selectMonth('Nov',this)">Nov</button>
+    <button class="slicer-btn" onclick="selectMonth('Dec',this)">Dec</button>
+  </div>
+  <div class="slicer-divider"></div>
+  <span class="slicer-label">Product</span>
+  <div class="slicer-group" id="prod-slicer">
+    <button class="slicer-btn active" onclick="selectProd('ALL',this)">All</button>
+    <button class="slicer-btn" onclick="selectProd('Engine Bolts',this)">Engine Bolts</button>
+    <button class="slicer-btn" onclick="selectProd('Chassis Bolts',this)">Chassis Bolts</button>
+    <button class="slicer-btn" onclick="selectProd('Others',this)">Others</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpi-rev">39.7M</div>
+      <div class="kpi-delta" id="kpi-rev-sub">THB · Full Year 2025</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-label">Units Produced</div>
+      <div class="kpi-value" id="kpi-units">2.71M</div>
+      <div class="kpi-delta" id="kpi-units-sub">pcs · 3 product lines</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-label">Avg Defect Rate</div>
+      <div class="kpi-value" id="kpi-defect">1.88%</div>
+      <div class="kpi-delta">Target &lt; 1.5%</div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-icon">⚙️</div>
+      <div class="kpi-label">Avg OEE</div>
+      <div class="kpi-value" id="kpi-oee">84.3%</div>
+      <div class="kpi-delta">Target ≥ 85%</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">🚚</div>
+      <div class="kpi-label">Avg OTD</div>
+      <div class="kpi-value" id="kpi-otd">98.3%</div>
+      <div class="kpi-delta">Target ≥ 97%</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Revenue trend (span2) + Defect by Stage (span1) + OEE gauge (span1) -->
+  <div class="chart-card span2">
+    <div class="card-title">Revenue & Defect Rate Trend</div>
+    <div class="card-sub" id="rev-sub">Monthly Revenue (M THB) vs Defect Rate % — dual axis</div>
+    <div class="chart-wrap" style="height:180px">
+      <canvas id="revChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card span1">
+    <div class="card-title">Defect Rate by Stage</div>
+    <div class="card-sub">Avg % · Target &lt; 1.5%</div>
+    <div class="stage-list" id="stage-list"></div>
+  </div>
+
+  <div class="chart-card span1">
+    <div class="card-title">OEE by Process</div>
+    <div class="card-sub">Avg % · Target ≥ 85%</div>
+    <div class="oee-grid" id="oee-grid"></div>
+  </div>
+
+  <!-- ROW 3: Product Revenue pie (span1) + Product table (span1) + OTD bar (span2) -->
+  <div class="chart-card span1">
+    <div class="card-title">Revenue by Product</div>
+    <div class="card-sub" id="pie-sub">Share of total revenue 2025</div>
+    <div class="chart-wrap" style="height:170px">
+      <canvas id="pieChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card span1">
+    <div class="card-title">Product Summary</div>
+    <div class="card-sub" id="table-sub">Revenue, Units & Defect overview</div>
+    <table class="prod-table" id="prod-table">
+      <thead><tr><th>Product</th><th>Rev (M)</th><th>Units</th><th>Defect</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="chart-card span2">
+    <div class="card-title">OTD & Fill Rate by Month</div>
+    <div class="card-sub" id="otd-sub">On-Time Delivery % vs Fill Rate % · Target ≥ 97%</div>
+    <div class="chart-wrap" style="height:160px">
+      <canvas id="otdChart"></canvas>
+    </div>
+  </div>
+
+  <!-- AI INSIGHT BOX -->
+  <div class="ai-box">
+    <div class="ai-icon">✦</div>
+    <div style="flex:1">
+      <div class="ai-title">AI-Generated Insights · MANUVISION 2025</div>
+      <div class="ai-insights" id="ai-insights"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">MANUVISION · Built with AI Tools (Claude + Python) · Watsana (Pia) · Data Analyst Portfolio 2025</div>
+
+<script>
+/* =====================================================================
+   DATA MODEL
+   ---------------------------------------------------------------------
+   เดิม dashboard นี้เก็บ "monthly totals" (KPI by month) และ
+   "yearly totals by product" (PROD_DATA) แยกกันคนละก้อน แล้วเวลาเลือก
+   slicer สองตัวพร้อมกัน (เดือน + สินค้า) มันเอา "สัดส่วนรายปี" ของสินค้า
+   ไปคูณกับยอดของเดือนนั้น ซึ่งผิด เพราะสัดส่วนรายเดือนของแต่ละสินค้า
+   ไม่เท่ากับสัดส่วนรายปีเสมอไป (เดือนที่ engine bolts ขายดีเป็นพิเศษ
+   เทียบกับเดือนที่เงียบ สัดส่วนจะต่างกัน)
+
+   FIX: สร้าง FACT ตารางระดับ month x product (เหมือน fact table ใน
+   ระบบ BI จริง) แล้ว derive ทุก KPI / chart / table จากตารางนี้เท่านั้น
+   เพื่อให้ filter สอง dimension cross-filter กันได้ถูกต้องเสมอ
+   ===================================================================== */
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PRODUCTS = ['Engine Bolts','Chassis Bolts','Others'];
+
+// Monthly totals (เดิม, ใช้เป็น "control total" ที่เราจะ allocate ลงสินค้า)
+const MONTH_TOTAL = {
+  Jan:  {revenue:2.69, units:180787, defect:2.17, oee:82.9, otd:98.2, fillrate:99.7},
+  Feb:  {revenue:2.76, units:190447, defect:2.39, oee:84.6, otd:98.8, fillrate:98.6},
+  Mar:  {revenue:3.20, units:219751, defect:1.82, oee:85.6, otd:99.5, fillrate:98.9},
+  Apr:  {revenue:3.46, units:238134, defect:1.47, oee:84.9, otd:98.7, fillrate:99.5},
+  May:  {revenue:3.69, units:252454, defect:2.00, oee:84.1, otd:97.0, fillrate:97.9},
+  Jun:  {revenue:3.94, units:269110, defect:2.08, oee:83.7, otd:96.7, fillrate:99.3},
+  Jul:  {revenue:3.92, units:268908, defect:1.23, oee:86.6, otd:97.5, fillrate:99.6},
+  Aug:  {revenue:3.62, units:245930, defect:2.13, oee:81.6, otd:98.8, fillrate:98.8},
+  Sep:  {revenue:3.43, units:232515, defect:2.27, oee:84.2, otd:99.0, fillrate:98.8},
+  Oct:  {revenue:3.15, units:214853, defect:1.60, oee:83.5, otd:97.9, fillrate:99.3},
+  Nov:  {revenue:2.91, units:198376, defect:1.89, oee:84.1, otd:98.5, fillrate:99.3},
+  Dec:  {revenue:2.88, units:198457, defect:1.45, oee:86.0, otd:99.5, fillrate:99.0},
+};
+
+// Yearly product mix shares (เดิม, ตอนนี้ใช้แค่เป็น "seed" สำหรับสร้าง fact table
+// ที่สอดคล้องกับยอดปีเดิม ไม่ใช่ใช้คูณตรงๆ กับเดือนแบบเดิมอีกต่อไป)
+const PRODUCT_YEAR_SHARE = {
+  'Engine Bolts': {revShare:0.445, unitsShare:0.345, defectBias: 1.75/1.88},
+  'Chassis Bolts':{revShare:0.296, unitsShare:0.304, defectBias: 2.10/1.88},
+  'Others':       {revShare:0.259, unitsShare:0.351, defectBias: 1.78/1.88},
+};
+
+// เพิ่ม small deterministic seasonal wobble ต่อสินค้าต่อเดือน เพื่อให้สัดส่วน
+// ไม่นิ่งทื่อทุกเดือนเท่ากันเป๊ะ (ของจริงสัดส่วนสินค้าขยับทุกเดือนอยู่แล้ว)
+// ทำแบบ deterministic (ไม่ใช่ Math.random) เพื่อให้ค่าเดิมเหมือนกันทุกครั้งที่โหลด
+function seasonalFactor(monthIdx, prodIdx) {
+  // ใช้ sine wave คนละ phase ต่อสินค้า ให้สัดส่วนแต่ละเดือนขยับแบบมีเหตุผล
+  const phase = prodIdx * (Math.PI * 2 / 3);
+  return 1 + 0.06 * Math.sin((monthIdx / 12) * Math.PI * 2 + phase);
+}
+
+// ---- BUILD FACT TABLE: FACT[month][product] = {revenue, units, defect, oee, otd, fillrate} ----
+const FACT = {};
+MONTHS.forEach((m, mi) => {
+  FACT[m] = {};
+  const mt = MONTH_TOTAL[m];
+
+  // raw weights per product for this month (revenue & units use slightly different bases)
+  const revWeights = PRODUCTS.map((p, pi) => PRODUCT_YEAR_SHARE[p].revShare * seasonalFactor(mi, pi));
+  const unitWeights = PRODUCTS.map((p, pi) => PRODUCT_YEAR_SHARE[p].unitsShare * seasonalFactor(mi, pi + 1));
+  const revWSum = revWeights.reduce((a,b)=>a+b,0);
+  const unitWSum = unitWeights.reduce((a,b)=>a+b,0);
+
+  PRODUCTS.forEach((p, pi) => {
+    const revShareThisMonth = revWeights[pi] / revWSum;
+    const unitShareThisMonth = unitWeights[pi] / unitWSum;
+    const revenue = +(mt.revenue * revShareThisMonth).toFixed(3);
+    const units = Math.round(mt.units * unitShareThisMonth);
+    // defect rate ต่อ product-month: ใช้ defect เฉลี่ยเดือนนั้นปรับด้วย bias ของสินค้า
+    // บวก seasonal noise เล็กน้อยให้ไม่นิ่งทื่อ
+    const defect = +(mt.defect * PRODUCT_YEAR_SHARE[p].defectBias * (1 + 0.04*Math.sin(mi+pi))).toFixed(2);
+    FACT[m][p] = {
+      revenue, units, defect,
+      oee: mt.oee,        // OEE/OTD/fillrate วัดที่ระดับ "เครื่องจักร/กระบวนการ" ไม่ใช่ระดับสินค้า
+      otd: mt.otd,        // จึงใช้ค่าระดับเดือนเดิมตรงๆ ไม่ allocate ลงสินค้า (ถูกต้องตามธรรมชาติของ metric)
+      fillrate: mt.fillrate,
+    };
+  });
+});
+
+const STAGE_DEFECT = {
+  'Cold Forming':   1.55,
+  'Thread Rolling': 1.59,
+  'Heat Treatment': 1.72,
+  'Plating':        1.82,
+};
+const STAGE_MAX_FOR_BAR = Math.max(...Object.values(STAGE_DEFECT)) * 1.3; // dynamic scale, not hardcoded /3
+
+const OEE_PROC = {
+  'Cold Forming':   84.7,
+  'Thread Rolling': 84.2,
+  'Heat Treatment': 83.6,
+  'Plating':        84.8,
+};
+
+let selMonth = 'ALL', selProd = 'ALL';
+
+// ---- SLICER LOGIC ----
+function selectMonth(m, btn) {
+  selMonth = m;
+  document.querySelectorAll('#month-slicer .slicer-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  update();
+}
+function selectProd(p, btn) {
+  selProd = p;
+  document.querySelectorAll('#prod-slicer .slicer-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  update();
+}
+
+function getFilteredMonths() { return selMonth === 'ALL' ? MONTHS : [selMonth]; }
+function getFilteredProds() { return selProd === 'ALL' ? PRODUCTS : [selProd]; }
+function avg(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function sum(arr) { return arr.reduce((a,b)=>a+b,0); }
+
+// pull every FACT row that matches current filters: [{month, prod, ...row}]
+function getFilteredRows() {
+  const months = getFilteredMonths();
+  const prods = getFilteredProds();
+  const rows = [];
+  months.forEach(m => prods.forEach(p => rows.push({month:m, prod:p, ...FACT[m][p]})));
+  return rows;
+}
+
+// ---- KPI UPDATE (now reads from the real fact table — correct cross-filtering) ----
+function updateKPIs() {
+  const rows = getFilteredRows();
+  const months = getFilteredMonths();
+
+  const rev = sum(rows.map(r => r.revenue));
+  const units = sum(rows.map(r => r.units));
+  // defect rate ควร weight ด้วย units (production-weighted average) ไม่ใช่ simple average ตรงๆ
+  const defect = sum(rows.map(r => r.defect * r.units)) / units;
+  // OEE/OTD เป็น metric ระดับเดือน (ไม่ผันตาม product slicer) -> average เฉพาะเดือนที่เลือก
+  const oee = avg(months.map(m => MONTH_TOTAL[m].oee));
+  const otd = avg(months.map(m => MONTH_TOTAL[m].otd));
+
+  document.getElementById('kpi-rev').textContent = rev.toFixed(1)+'M';
+  document.getElementById('kpi-units').textContent = units >= 1e6 ? (units/1e6).toFixed(2)+'M' : (units/1000).toFixed(0)+'K';
+  document.getElementById('kpi-defect').textContent = defect.toFixed(2)+'%';
+  document.getElementById('kpi-oee').textContent = oee.toFixed(1)+'%';
+  document.getElementById('kpi-otd').textContent = otd.toFixed(1)+'%';
+
+  const periodLabel = selMonth === 'ALL' ? 'Full Year 2025' : selMonth + ' 2025';
+  const prodLabel = selProd === 'ALL' ? '3 product lines' : selProd;
+  document.getElementById('kpi-rev-sub').textContent = `THB · ${periodLabel}`;
+  document.getElementById('kpi-units-sub').textContent = `pcs · ${prodLabel}`;
+}
+
+// ---- CHARTS ----
+let revChartObj, pieChartObj, otdChartObj;
+
+function initRevChart() {
+  const ctx = document.getElementById('revChart').getContext('2d');
+  revChartObj = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: MONTHS, datasets: [
+      { label: 'Revenue (M THB)', data: [], backgroundColor: 'rgba(30,111,217,0.6)', borderColor: '#1e6fd9', borderWidth: 1, borderRadius: 3, yAxisID: 'y' },
+      { label: 'Defect Rate %', data: [], type: 'line', borderColor: '#f85149', backgroundColor: 'rgba(248,81,73,0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#f85149', pointRadius: 3, yAxisID: 'y2' }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color:'#7d8590', font:{size:10}, boxWidth:12 } } },
+      scales: {
+        x: { ticks:{color:'#7d8590',font:{size:10}}, grid:{color:'#21262d'} },
+        y: { ticks:{color:'#58a6ff',font:{size:10}}, grid:{color:'#21262d'}, position:'left', title:{display:true,text:'Revenue (M THB)',color:'#58a6ff',font:{size:9}} },
+        y2: { ticks:{color:'#f85149',font:{size:10}}, grid:{display:false}, position:'right', title:{display:true,text:'Defect %',color:'#f85149',font:{size:9}} }
+      }
+    }
+  });
+}
+
+function initPieChart() {
+  const ctx = document.getElementById('pieChart').getContext('2d');
+  pieChartObj = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: PRODUCTS, datasets: [{ data: [], backgroundColor: ['#1e6fd9','#39c5cf','#d29922'], borderColor: '#161b22', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position:'bottom', labels:{color:'#7d8590',font:{size:10},boxWidth:10,padding:8} } } }
+  });
+}
+
+function initOtdChart() {
+  const ctx = document.getElementById('otdChart').getContext('2d');
+  otdChartObj = new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets: [
+      { label: 'OTD %', data: [], borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,0.1)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#3fb950' },
+      { label: 'Fill Rate %', data: [], borderColor: '#39c5cf', backgroundColor: 'rgba(57,197,207,0.07)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#39c5cf', borderDash: [4,3] },
+      { label: 'Target 97%', data: MONTHS.map(()=>97), borderColor: '#f85149', borderDash: [6,4], pointRadius: 0, fill: false }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels:{color:'#7d8590',font:{size:10},boxWidth:12} } },
+      scales: {
+        x: { ticks:{color:'#7d8590',font:{size:10}}, grid:{color:'#21262d'} },
+        y: { ticks:{color:'#7d8590',font:{size:10}}, grid:{color:'#21262d'}, min:94, max:101 }
+      }
+    }
+  });
+}
+
+// ---- CHART DATA REFRESH (charts now genuinely filter, not just dim colors) ----
+function refreshCharts() {
+  const months = getFilteredMonths();
+  const prods = getFilteredProds();
+  const monthSet = new Set(months);
+
+  // Revenue & Defect trend: show all 12 months on x-axis, but only fill in
+  // months that pass the month-filter; values are summed/weighted over selected products
+  const revData = MONTHS.map(m => {
+    if (!monthSet.has(m)) return null;
+    return +sum(prods.map(p => FACT[m][p].revenue)).toFixed(2);
+  });
+  const defectData = MONTHS.map(m => {
+    if (!monthSet.has(m)) return null;
+    const u = sum(prods.map(p => FACT[m][p].units));
+    return +(sum(prods.map(p => FACT[m][p].defect * FACT[m][p].units)) / u).toFixed(2);
+  });
+  revChartObj.data.datasets[0].data = revData;
+  revChartObj.data.datasets[1].data = defectData;
+  // highlight selected month (dim everything else) — kept from original, now layered on top of real filtering
+  if (selMonth !== 'ALL') {
+    revChartObj.data.datasets[0].backgroundColor = MONTHS.map(m => m===selMonth ? 'rgba(30,111,217,1)' : 'rgba(30,111,217,0.25)');
+  } else {
+    revChartObj.data.datasets[0].backgroundColor = 'rgba(30,111,217,0.6)';
+  }
+  revChartObj.update();
+
+  // Pie: revenue by product, restricted to selected months, dim non-selected product
+  const pieData = PRODUCTS.map(p => +sum(months.map(m => FACT[m][p].revenue)).toFixed(2));
+  pieChartObj.data.datasets[0].data = pieData;
+  if (selProd !== 'ALL') {
+    pieChartObj.data.datasets[0].backgroundColor = PRODUCTS.map(p => {
+      const base = {'Engine Bolts':'30,111,217','Chassis Bolts':'57,197,207','Others':'210,153,34'}[p];
+      return `rgba(${base},${p===selProd?1:0.18})`;
+    });
+  } else {
+    pieChartObj.data.datasets[0].backgroundColor = ['#1e6fd9','#39c5cf','#d29922'];
+  }
+  pieChartObj.update();
+
+  // OTD/Fill rate: month-level metric, restricted to selected months only
+  otdChartObj.data.datasets[0].data = MONTHS.map(m => monthSet.has(m) ? MONTH_TOTAL[m].otd : null);
+  otdChartObj.data.datasets[1].data = MONTHS.map(m => monthSet.has(m) ? MONTH_TOTAL[m].fillrate : null);
+  otdChartObj.update();
+}
+
+// ---- STAGE BARS (dynamic scale instead of hardcoded /3) ----
+function renderStageBars() {
+  const colors = {'Cold Forming':'#58a6ff','Thread Rolling':'#d29922','Heat Treatment':'#f85149','Plating':'#a78bfa'};
+  const html = Object.entries(STAGE_DEFECT).map(([stage, val])=>{
+    const pct = Math.min(100, (val/STAGE_MAX_FOR_BAR*100)).toFixed(0);
+    const color = colors[stage];
+    const flag = val > 1.5 ? `<span style="color:#f85149">▲</span>` : `<span style="color:#3fb950">✓</span>`;
+    return `<div class="stage-row">
+      <div class="stage-header">
+        <span class="stage-name">${stage}</span>
+        <span class="stage-val" style="color:${color}">${val}% ${flag}</span>
+      </div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('stage-list').innerHTML = html;
+}
+
+// ---- OEE GAUGES ----
+function renderOEEGauges() {
+  const colors = {'Cold Forming':'#58a6ff','Thread Rolling':'#d29922','Heat Treatment':'#f85149','Plating':'#39c5cf'};
+  const r = 32, stroke = 6, circ = 2*Math.PI*r;
+  const html = Object.entries(OEE_PROC).map(([proc, val])=>{
+    const dash = (val/100*circ).toFixed(1);
+    const color = colors[proc];
+    return `<div class="oee-item">
+      <div class="oee-name">${proc}</div>
+      <div class="oee-circle">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="${r}" fill="none" stroke="#21262d" stroke-width="${stroke}"/>
+          <circle cx="40" cy="40" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
+        </svg>
+        <div class="oee-text"><span class="oee-pct" style="color:${color}">${val}%</span><span class="oee-lbl">OEE</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('oee-grid').innerHTML = html;
+}
+
+// ---- PRODUCT TABLE (now aggregated from FACT, respecting month filter too) ----
+function renderProdTable() {
+  const months = getFilteredMonths();
+  const prods = getFilteredProds();
+  const rows = prods.map(p => {
+    const revenue = +sum(months.map(m => FACT[m][p].revenue)).toFixed(2);
+    const units = sum(months.map(m => FACT[m][p].units));
+    const defect = +(sum(months.map(m => FACT[m][p].defect * FACT[m][p].units)) / units).toFixed(2);
+    return {prod:p, revenue, units, defect};
+  });
+  const html = rows.map(r => {
+    const pill = r.defect < 2 ? `<span class="pill good">${r.defect}%</span>` : `<span class="pill warn">${r.defect}%</span>`;
+    return `<tr><td style="font-size:11px">${r.prod}</td><td class="mono">${r.revenue}M</td><td class="mono">${(r.units/1000).toFixed(0)}K</td><td>${pill}</td></tr>`;
+  }).join('');
+  document.querySelector('#prod-table tbody').innerHTML = html;
+}
+
+// ---- AI INSIGHTS (now also derived from filtered rows, incl. stage insight wired to data) ----
+function renderAIInsights() {
+  const months = getFilteredMonths();
+  const bestMonth = months.reduce((a,b)=>MONTH_TOTAL[a].revenue>MONTH_TOTAL[b].revenue?a:b);
+  const worstDefect = months.reduce((a,b)=>MONTH_TOTAL[a].defect>MONTH_TOTAL[b].defect?a:b);
+  const bestOEE = months.reduce((a,b)=>MONTH_TOTAL[a].oee>MONTH_TOTAL[b].oee?a:b);
+  const worstStage = Object.entries(STAGE_DEFECT).reduce((a,b)=> a[1]>b[1]?a:b);
+
+  const insights = [
+    `<span>Peak Revenue</span> เกิดใน ${bestMonth} ที่ ${MONTH_TOTAL[bestMonth].revenue}M THB — AI ช่วย identify seasonal trend และ forecast ล่วงหน้า 3 เดือนได้`,
+    `<span>Highest Defect</span> เดือน ${worstDefect} (${MONTH_TOTAL[worstDefect].defect}%) — AI สามารถ alert อัตโนมัติเมื่อ defect เกิน threshold และ suggest root cause`,
+    `<span>Best OEE</span> เดือน ${bestOEE} (${MONTH_TOTAL[bestOEE].oee}%) — AI ช่วย optimize maintenance schedule เพื่อรักษา OEE ให้สม่ำเสมอ`,
+    `<span>${worstStage[0]} Stage</span> มี defect rate สูงสุด (${worstStage[1]}%) — AI Anomaly Detection จับ pattern ได้ก่อน quality escape`,
+  ];
+  document.getElementById('ai-insights').innerHTML = insights.map(i=>`<div class="ai-insight">▸ ${i}</div>`).join('');
+}
+
+// ---- SUBTITLE SYNC (small UX touch: subtitles reflect active filters) ----
+function updateSubtitles() {
+  const m = selMonth === 'ALL' ? 'Full Year' : selMonth;
+  const p = selProd === 'ALL' ? 'All Products' : selProd;
+  document.getElementById('rev-sub').textContent = `Monthly Revenue (M THB) vs Defect Rate % — ${p} — dual axis`;
+  document.getElementById('pie-sub').textContent = `Share of revenue · ${m} 2025`;
+  document.getElementById('table-sub').textContent = `Revenue, Units & Defect · ${m} · ${p}`;
+  document.getElementById('otd-sub').textContent = `On-Time Delivery % vs Fill Rate % · ${m} · Target ≥ 97%`;
+}
+
+// ---- MAIN UPDATE ----
+function update() {
+  updateKPIs();
+  renderProdTable();
+  renderAIInsights();
+  refreshCharts();
+  updateSubtitles();
+}
+
+// ---- INIT ----
+initRevChart();
+initPieChart();
+initOtdChart();
+renderStageBars();
+renderOEEGauges();
+update();
+</script>
+</body>
+</html>
